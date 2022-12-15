@@ -1,6 +1,6 @@
 # Incentive-smart-contracts
 
-Within the Incentive protocol there are parts that are managed on-chein, such as:
+Within the Incentive protocol there are parts that are managed on-chain, such as:
 - seller 🧑‍🌾/buyer 👨‍💼 accounts
 - incentives 🍔
 - marketplaces 🛒
