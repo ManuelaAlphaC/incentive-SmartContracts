@@ -3,7 +3,7 @@
 Within the Incentive protocol, some parts are managed on-chain, such as:
 - seller/buyer accounts
 - incentives
-- marketplaces
+- marketplace
 
 and other parts that are off-chain, like:
 - follow
@@ -12,7 +12,7 @@ and other parts that are off-chain, like:
 - Search
 - crypto/fiat payments
 
-## Accounts
+## Profiles
 
 The <b>Seller 🧑‍🌾</b> account has the following characteristics:
 1. is the personal account of the business that chooses to register on Incentive Protocol which shows the basic information of the business, such as the name, the profile photo, the bio, position, the incentives created by the business, and other details such as external links that can bring to social media networks thus making the account truthful
