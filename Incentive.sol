@@ -15,19 +15,24 @@ contract IncentiveHUB is ERC721, ERC721Enumerable, ERC721URIStorage {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIdCounter;
 
+    error SoldOut();
+
     mapping(address => DataTypes.SellerAccount) public _sellers;  // returns all the information of a seller
     mapping(address => DataTypes.BuyerAccount) public _buyers;  // returns all information about a buyer
     mapping(uint256 => DataTypes.specialIncentive) public _specilaIncentives;  // returns all the information of a specific specialIncentive
     mapping(uint256 => DataTypes.Incentive) public _incentive;  // returns all the information of a specific Incentive
+    mapping(uint256 => DataTypes.eventIncentive) public _eventIncentives; // returns all the information of a event Incentive
     mapping(address => bool) public _isSeller;  // returns TRUE if the address is owned by the Seller
     mapping(address => bool) public _isBuyer;  // returns TRUE if the address is owned by the Buyer
+    mapping(uint256 => bool) public _isActive; // returns TRUE if the event incentive isn't expired
 
 
     /******************************** ARRAYS *************************************/
     DataTypes.SellerAccount[] sellers; // returns all Seller accounts
     DataTypes.BuyerAccount[] buyers; // return all Buyer accounts
-    DataTypes.specialIncentive[] specialIncentives; // returns all specialIncentives
+    DataTypes.specialIncentive[] specialIncentives; // returns all special Incentives
     DataTypes.Incentive[] incentives; // returns all fixed price incentives
+    DataTypes.eventIncentive[] eventIncentives; // returns all event Incentives
 
     constructor() ERC721("IncentiveHUB", "HUB"){}
 
@@ -36,17 +41,17 @@ contract IncentiveHUB is ERC721, ERC721Enumerable, ERC721URIStorage {
         string memory profileImage,
         address seller
     ) public {
-        uint256 IdAccount = _tokenIdCounter.current();
-        sellers.push(DataTypes.SellerAccount(profileImage, seller, IdAccount));
+        uint256 IdSellerAccount = _tokenIdCounter.current();
+        sellers.push(DataTypes.SellerAccount(profileImage, seller, IdSellerAccount));
         _isSeller[seller] = true;
         _tokenIdCounter.increment();
-        _mint(seller, IdAccount);
-        _setTokenURI(IdAccount, profileImage);
+        _mint(seller, IdSellerAccount);
+        _setTokenURI(IdSellerAccount, profileImage);
 
         emit Events.WasCreatedSellerAccount(
-            IdAccount,
             profileImage,
-            seller
+            seller,
+            IdSellerAccount
         );
     }
 
@@ -56,21 +61,22 @@ contract IncentiveHUB is ERC721, ERC721Enumerable, ERC721URIStorage {
         uint256 price,
         uint256 discount,
         address creator
-    ) public  {
-        uint256 IdIncentive = _tokenIdCounter.current();
+    ) public payable {
+        uint256 IdSpecialIncentive = _tokenIdCounter.current();
         uint256 newprice = price - (price * (discount/100));
         uint256 save = price * (discount/100);
-        specialIncentives.push(DataTypes.specialIncentive(incentiveURI, price, discount, IdIncentive, creator));
+        require(msg.value > save, "Insufficient funds!");
+        specialIncentives.push(DataTypes.specialIncentive(incentiveURI, price, discount, IdSpecialIncentive, creator));
         _tokenIdCounter.increment();
-        _mint(msg.sender, IdIncentive);
-        _setTokenURI(IdIncentive, incentiveURI);
+        _mint(msg.sender, IdSpecialIncentive);
+        _setTokenURI(IdSpecialIncentive, incentiveURI);
 
         emit Events.WasCreatedSpecialIncentive(
-            IdIncentive,
-            creator,
             incentiveURI,
             price,
             discount,
+            IdSpecialIncentive,
+            creator,
             newprice,
             save 
         );
@@ -80,18 +86,45 @@ contract IncentiveHUB is ERC721, ERC721Enumerable, ERC721URIStorage {
         string memory incentiveURI,
         uint256 price,
         address creator
-    ) public  {
+    ) public payable  {
         uint256 IdIncentive = _tokenIdCounter.current();
+        require(msg.value > price, "Insufficient funds!");
         incentives.push(DataTypes.Incentive(incentiveURI, price, IdIncentive, creator));
         _tokenIdCounter.increment();
         _mint(msg.sender, IdIncentive);
         _setTokenURI(IdIncentive, incentiveURI);
 
         emit Events.WasCreatedIncentive(
-            IdIncentive,
-            creator,
             incentiveURI,
-            price
+            price,
+            IdIncentive,
+            creator
+        );
+    }
+
+    function createEventIncentive(
+        string memory eventIncentiveImage,
+        uint256 expiration,
+        uint256 price,
+        address creator
+    ) public payable {
+        uint256 IdEventIncentive = _tokenIdCounter.current();
+        require(msg.value > price, "Insufficient funds!");
+        if(expiration < block.timestamp) {
+            eventIncentives.push(DataTypes.eventIncentive(eventIncentiveImage, expiration, price, IdEventIncentive, creator));
+            _isActive[IdEventIncentive] = true;
+            _tokenIdCounter.increment();
+            _mint(msg.sender, IdEventIncentive);
+            _setTokenURI(IdEventIncentive, eventIncentiveImage);
+        } else {
+            revert SoldOut();
+        }
+        emit Events.WasCreatedEventIncentive(
+                eventIncentiveImage,
+                expiration, 
+                price, 
+                IdEventIncentive, 
+                creator
         );
     }
 
@@ -100,17 +133,17 @@ contract IncentiveHUB is ERC721, ERC721Enumerable, ERC721URIStorage {
         string memory profileImage,
         address buyer
     ) public {
-        uint256 IdAccount = _tokenIdCounter.current();
-        buyers.push(DataTypes.BuyerAccount(profileImage, buyer, IdAccount));
+        uint256 IdBuyerAccount = _tokenIdCounter.current();
+        buyers.push(DataTypes.BuyerAccount(profileImage, buyer, IdBuyerAccount));
         _isBuyer[buyer] = true;
         _tokenIdCounter.increment();
-        _mint(buyer, IdAccount);
-        _setTokenURI(IdAccount, profileImage);
+        _mint(buyer, IdBuyerAccount);
+        _setTokenURI(IdBuyerAccount, profileImage);
 
         emit Events.WasCreatedBuyerAccount(
-            IdAccount,
             profileImage,
-            buyer 
+            buyer,
+            IdBuyerAccount 
         );
     }
 
