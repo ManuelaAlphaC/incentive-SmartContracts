@@ -17,11 +17,11 @@ contract IncentiveHUB is ERC721, ERC721Enumerable, ERC721URIStorage {
 
     error SoldOut();
 
-    mapping(address => DataTypes.SellerAccount) public _sellers;  // returns all the information of a seller
-    mapping(address => DataTypes.BuyerAccount) public _buyers;  // returns all information about a buyer
-    mapping(uint256 => DataTypes.specialIncentive) public _specilaIncentives;  // returns all the information of a specific specialIncentive
-    mapping(uint256 => DataTypes.Incentive) public _incentive;  // returns all the information of a specific Incentive
-    mapping(uint256 => DataTypes.eventIncentive) public _eventIncentives; // returns all the information of a event Incentive
+    mapping(address => DataTypes.SellerAccount) private _sellers;  // returns all the information of a seller
+    mapping(address => DataTypes.BuyerAccount) private _buyers;  // returns all information about a buyer
+    mapping(uint256 => DataTypes.specialIncentive) private _specilaIncentives;  // returns all the information of a specific specialIncentive
+    mapping(uint256 => DataTypes.Incentive) private _incentive;  // returns all the information of a specific Incentive
+    mapping(uint256 => DataTypes.eventIncentive) private _eventIncentives; // returns all the information of a event Incentive
     mapping(address => bool) public _isSeller;  // returns TRUE if the address is owned by the Seller
     mapping(address => bool) public _isBuyer;  // returns TRUE if the address is owned by the Buyer
     mapping(uint256 => bool) public _isActive; // returns TRUE if the event incentive isn't expired
@@ -35,6 +35,11 @@ contract IncentiveHUB is ERC721, ERC721Enumerable, ERC721URIStorage {
     DataTypes.eventIncentive[] eventIncentives; // returns all event Incentives
 
     constructor() ERC721("IncentiveHUB", "HUB"){}
+
+    modifier onlyBuyer(){
+        require(_isBuyer[msg.sender] == true, "Create buyer account");
+        _;
+    }
 
       /******************* SELLER *************************/
     function createSellerProfile(
@@ -60,13 +65,14 @@ contract IncentiveHUB is ERC721, ERC721Enumerable, ERC721URIStorage {
         string memory incentiveURI,
         uint256 price,
         uint256 discount,
+        bool paid,
         address creator
-    ) public payable {
+    ) public payable onlyBuyer {
         uint256 IdSpecialIncentive = _tokenIdCounter.current();
         uint256 newprice = price - (price * (discount/100));
         uint256 save = price * (discount/100);
-        require(msg.value > save, "Insufficient funds!");
-        specialIncentives.push(DataTypes.specialIncentive(incentiveURI, price, discount, IdSpecialIncentive, creator));
+        require(price!= 0 && msg.value > save && paid == false || paid == true, "Insufficient funds!");
+        specialIncentives.push(DataTypes.specialIncentive(incentiveURI, price, discount, IdSpecialIncentive, paid, creator));
         _tokenIdCounter.increment();
         _mint(msg.sender, IdSpecialIncentive);
         _setTokenURI(IdSpecialIncentive, incentiveURI);
@@ -78,18 +84,20 @@ contract IncentiveHUB is ERC721, ERC721Enumerable, ERC721URIStorage {
             IdSpecialIncentive,
             creator,
             newprice,
-            save 
+            save,
+            paid
         );
     }
 
     function createIncentive(
         string memory incentiveURI,
         uint256 price,
+        bool paid,
         address creator
-    ) public payable  {
+    ) public payable onlyBuyer {
         uint256 IdIncentive = _tokenIdCounter.current();
-        require(msg.value > price, "Insufficient funds!");
-        incentives.push(DataTypes.Incentive(incentiveURI, price, IdIncentive, creator));
+        require(price!= 0 && msg.value > price && paid == false || paid == true, "Insufficient funds!");
+        incentives.push(DataTypes.Incentive(incentiveURI, price, IdIncentive, paid, creator));
         _tokenIdCounter.increment();
         _mint(msg.sender, IdIncentive);
         _setTokenURI(IdIncentive, incentiveURI);
@@ -98,7 +106,8 @@ contract IncentiveHUB is ERC721, ERC721Enumerable, ERC721URIStorage {
             incentiveURI,
             price,
             IdIncentive,
-            creator
+            creator,
+            paid
         );
     }
 
@@ -106,12 +115,13 @@ contract IncentiveHUB is ERC721, ERC721Enumerable, ERC721URIStorage {
         string memory eventIncentiveImage,
         uint256 expiration,
         uint256 price,
+        bool paid,
         address creator
-    ) public payable {
+    ) public payable onlyBuyer {
         uint256 IdEventIncentive = _tokenIdCounter.current();
-        require(msg.value > price, "Insufficient funds!");
-        if(expiration < block.timestamp) {
-            eventIncentives.push(DataTypes.eventIncentive(eventIncentiveImage, expiration, price, IdEventIncentive, creator));
+        require(price!= 0 && msg.value > price && paid == false || paid == true, "Insufficient funds!");
+        if(expiration > block.timestamp) {
+            eventIncentives.push(DataTypes.eventIncentive(eventIncentiveImage, expiration, price, IdEventIncentive, paid, creator));
             _isActive[IdEventIncentive] = true;
             _tokenIdCounter.increment();
             _mint(msg.sender, IdEventIncentive);
@@ -124,7 +134,8 @@ contract IncentiveHUB is ERC721, ERC721Enumerable, ERC721URIStorage {
                 expiration, 
                 price, 
                 IdEventIncentive, 
-                creator
+                creator,
+                paid
         );
     }
 

@@ -43,6 +43,7 @@ library DataTypes {
         uint256 price;
         uint256 discount;
         uint256 IdSpecialIncentive;
+        bool paid;
         address creator;
     }
 
@@ -58,6 +59,7 @@ library DataTypes {
         string incentiveURI;
         uint256 price;
         uint256 IdIncentive;
+        bool paid;
         address creator;
     }
   
@@ -75,6 +77,7 @@ library DataTypes {
       uint256 expiration;
       uint256 price;
       uint256 IdEventIncentive;
+      bool paid;
       address creator;
     }
 

@@ -23,14 +23,16 @@ library Events {
         uint256 indexed IdSpecialIncentive,
         address indexed creator,
         uint256 newprice,
-        uint256 save
+        uint256 save,
+        bool paid
     );
 
     event WasCreatedIncentive(
         string incentiveURI,
         uint256 price,
         uint256 indexed IdIncentive,
-        address indexed creator
+        address indexed creator,
+        bool paid
     );
 
     event WasCreatedEventIncentive(
@@ -38,7 +40,8 @@ library Events {
         uint256 expiration,
         uint256 price,
         uint256 indexed IdEventIncentive,
-        address indexed creator
+        address indexed creator,
+        bool paid
     );
 
 }
